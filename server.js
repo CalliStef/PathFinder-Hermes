@@ -34,44 +34,7 @@ app.post("/api/simplify", (req, res) => {
   }
 });
 
-app.post("/api/summarize", (req, res) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
-  if (req.body.key == process.env.INTERNAL_KEY) {
-    const textData = req.body;
 
-    const apiCore = new ApiCore({
-      getSummarize: true,
-      textData: textData,
-    });
-
-    apiCore
-      .summarizedResponse()
-      .then((result) => res.json(result))
-      .catch((err) => {
-        console.error(err);
-      });
-  }
-});
-
-app.post("/api/dictionary", (req, res) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
-
-  if (req.body.key == process.env.INTERNAL_KEY) {
-    const textData = req.body;
-
-    const apiCore = new ApiCore({
-      getDictionary: true,
-      textData: textData,
-    });
-
-    apiCore
-      .dictionaryResponse()
-      .then((result) => res.json(result))
-      .catch((err) => {
-        console.error(err);
-      });
-  }
-});
 
 const port = process.env.PORT || 8080;
 app.listen(port, () =>
