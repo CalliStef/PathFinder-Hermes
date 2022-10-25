@@ -18,9 +18,10 @@ const database = mysql
 
 // USERS //
 
+// TESTED - Laurent
 export async function getUserByLogin(dbData) {
     const userEmail = dbData.userEmail
-    const password = dbData.userPassword
+    const password = dbData.password
     const params = {
         user_email: userEmail,
     }
@@ -35,6 +36,7 @@ export async function getUserByLogin(dbData) {
     }
 }
 
+// TESTED - Laurent
 export async function getUserByID(userId) {
     const params = {
         user_id: userId,
@@ -46,17 +48,19 @@ export async function getUserByID(userId) {
     return user_info[0][0]
 }
 
+// TESTED - Laurent
 export async function addUser(dbData) {
     const checkUserResult = await checkEmail(dbData.userEmail)
     if (checkUserResult.user_matches === 0) {
         const password = dbData.password
         const encryptedPassword = await bcrypt.hash(password, 10)
         const params = {
-            name: dbData.userName,
-            email: dbData.userEmail,
+            setting_id: dbData.settingId,
+            user_name: dbData.userName,
+            user_email: dbData.userEmail,
             password: encryptedPassword,
         }
-        const sqlInsertUser = "INSERT INTO user (user_name, user_email, password_hash, user_creation_date) VALUES (:name, :email, :password, CURRENT_TIMESTAMP);"
+        const sqlInsertUser = "INSERT INTO user (user_name, setting_id, user_email, password_hash, user_creation_date) VALUES (:user_name, :setting_id, :user_email, :password, CURRENT_TIMESTAMP);"
         const result = await database.query(sqlInsertUser, params)
         if (result[0]) {
             const user_info = await getUserByID(result[0].insertId)
@@ -68,6 +72,7 @@ export async function addUser(dbData) {
     return
 }
 
+// TESTED - Laurent
 export async function checkEmail(userEmail) {
     const params = {
         user_email: userEmail,
@@ -78,22 +83,23 @@ export async function checkEmail(userEmail) {
     return user_matches[0][0]
 }
 
+// TESTED - Laurent
 export async function updateUserEmail(dbData) {
     const params = {
         user_id: dbData.userId,
         user_email: dbData.userEmail
     }
-
     const matches = await checkEmail(dbData.userEmail)
     if (matches.user_matches === 0) {
         const sqlUpdateUserEmail = "UPDATE user SET user_email = :user_email WHERE user_id = :user_id;"
         await database.query(sqlUpdateUserEmail, params)
-        const user_info = await getUserByID(userId)
+        const user_info = await getUserByID(dbData.userId)
         return user_info
     }
     return
 }
 
+// TESTED - Laurent
 export async function updateUserName(dbData) {
     const params = {
         user_id: dbData.userId,
@@ -101,23 +107,30 @@ export async function updateUserName(dbData) {
     }
     const sqlUpdateUserName = "UPDATE user SET user_name = :user_name WHERE user_id = :user_id;"
     await database.query(sqlUpdateUserName, params)
-    const user_info = await getUserByID(userId)
+    const user_info = await getUserByID(dbData.userId)
     return user_info
 }
 
+// TESTED - Laurent
 export async function deleteUser(userId) {
     const params = {
         user_id: userId
     }
     const sqlDeleteUser = "DELETE FROM user WHERE user_id = :user_id;"
+    const setting = await getSettingByUserID(userId)
+    if (!setting) {
+        return
+    }
     await deleteFoldersByUserId(userId)
     await database.query(sqlDeleteUser, params)
+    await deleteSetting(setting.setting_id)
     console.log('db user deleted')
     return
 }
 
 // SETTINGS //
 
+// TESTED - Laurent
 export async function getSettingByID(settingId) {
     const params = {
         setting_id: settingId,
@@ -128,6 +141,7 @@ export async function getSettingByID(settingId) {
     console.log('db get setting by id', setting_info[0][0])
     return setting_info[0][0]
 }
+
 
 export async function getSettingByFileID(fileId) {
     const params = {
@@ -140,6 +154,7 @@ export async function getSettingByFileID(fileId) {
     return setting_info[0][0]
 }
 
+// TESTED - Laurent
 export async function getSettingByUserID(userId) {
     const params = {
         user_id: userId,
@@ -151,6 +166,7 @@ export async function getSettingByUserID(userId) {
     return setting_info[0][0]
 }
 
+// TESTED - Laurent
 export async function addSetting(dbData) {
     const params = {
         background_colour: dbData.backgroundColour,
@@ -168,6 +184,7 @@ export async function addSetting(dbData) {
     }
 }
 
+// TESTED - Laurent
 export async function updateSetting(dbData) {
     const params = {
         setting_id: dbData.settingId,
@@ -184,6 +201,7 @@ export async function updateSetting(dbData) {
     return setting_info
 }
 
+// TESTED - Laurent
 export async function deleteSetting(settingId) {
     const params = {
         setting_id: settingId
@@ -194,15 +212,9 @@ export async function deleteSetting(settingId) {
     return
 }
 
-export async function deleteSettingByFileId(fileId) {
-    const setting = await getSettingByFileID(fileId)
-    await deleteSetting(setting.setting_id)
-    console.log('db setting by file id deleted')
-    return
-}
-
 // FOLDERS //
 
+// TESTED - Laurent
 export async function getFolderByID(folderId) {
     const params = {
         folder_id: folderId,
@@ -225,6 +237,7 @@ export async function getFolderByFileID(fileId) {
     return folder_info[0][0]
 }
 
+// TESTED - Laurent
 export async function getFoldersByUserID(userId) {
     const params = {
         user_id: userId,
@@ -236,6 +249,7 @@ export async function getFoldersByUserID(userId) {
     return all_folder_info[0]
 }
 
+// TESTED - Laurent
 export async function addFolder(dbData) {
     const checkFolderResult = await checkFolder(dbData.userId, dbData.folderName)
     if (checkFolderResult.folder_matches === 0) {
@@ -255,30 +269,36 @@ export async function addFolder(dbData) {
     return
 }
 
+// TESTED - Laurent (maybe a bad design?)
 export async function checkFolder(userId, folderName) {
     const params = {
         user_id: userId,
         folder_name: folderName
     }
-    const sqlSelectFolderByName = "SELECT COUNT(*) AS folder_matches FROM folder JOIN user ON user.user_id = folder.user_id WHERE folder.folder_name = :folder_name;"
+    const sqlSelectFolderByName = "SELECT COUNT(*) AS folder_matches FROM folder JOIN user ON user.user_id = folder.user_id WHERE folder.folder_name = :folder_name AND user.user_id = :user_id;"
     const folder_matches = await database.query(sqlSelectFolderByName, params)
     console.log('db check folder names', folder_matches[0][0])
     return folder_matches[0][0]
 }
 
-
+// TESTED - Laurent
 export async function updateFolder(dbData) {
-    const params = {
-        folder_id: dbData.folderId,
-        folder_name: dbData.folderName
+    const checkFolderResult = await checkFolder(dbData.userId, dbData.folderName)
+    if (checkFolderResult.folder_matches === 0) {
+        const params = {
+            folder_id: dbData.folderId,
+            folder_name: dbData.folderName
+        }
+        const sqlUpdateFolder = "UPDATE folder SET folder_name = :folder_name WHERE folder_id = :folder_id;"
+        await database.query(sqlUpdateFolder, params)
+        const folder_info = await getFolderByID(dbData.folderId)
+        console.log('db update folder', folder_info)
+        return folder_info
     }
-    const sqlUpdateFolder = "UPDATE folder SET folder_name = :folder_name WHERE folder_id = :folder_id;"
-    await database.query(sqlUpdateFolder, params)
-    const folder_info = await getFolderByID(dbData.folderId)
-    console.log('db update folder', folder_info)
-    return folder_info
+    return
 }
 
+// TESTED - Laurent
 export async function deleteFolder(folderId) {
     const params = {
         folder_id: folderId
@@ -290,12 +310,13 @@ export async function deleteFolder(folderId) {
     return
 }
 
-export async function deleteFoldersByUserId (userId) {
+// TESTED - Laurent
+export async function deleteFoldersByUserId(userId) {
     const folders = await getFoldersByUserID(userId)
     if (folders.length >= 1) {
-        folders.forEach(async folder => {
+        for (const folder of folders) {
             await deleteFolder(folder.folder_id)
-        });
+        }
     }
     console.log('db folders from user deleted')
     return
@@ -303,6 +324,7 @@ export async function deleteFoldersByUserId (userId) {
 
 // FILES //
 
+// TESTED - Laurent
 export async function getFileByID(fileId) {
     const params = {
         file_id: fileId,
@@ -316,6 +338,7 @@ export async function getFileByID(fileId) {
 
 }
 
+// TESTED - Laurent
 export async function getFileNamesByFolderID(folderId) {
     const params = {
         folder_id: folderId,
@@ -327,17 +350,19 @@ export async function getFileNamesByFolderID(folderId) {
     return all_file_info[0]
 }
 
+// TESTED - Laurent
 export async function getFileNamesByUserID(userId) {
     const params = {
         user_id: userId,
     }
 
-    const sqlSelectFileNamesByUserID = "SELECT file.file_id, file.file_name FROM user JOIN file ON file.user_id = folder.user_id WHERE user.user_id = :user_id;"
+    const sqlSelectFileNamesByUserID = "SELECT file.file_id, file.file_name FROM user JOIN file ON file.user_id = user.user_id WHERE user.user_id = :user_id;"
     const all_file_info = await database.query(sqlSelectFileNamesByUserID, params)
     console.log('db get file names by user id', all_file_info[0])
     return all_file_info[0]
 }
 
+// TESTED - Laurent
 export async function addFile(dbData) {
     const params = {
         user_id: dbData.userId,
@@ -357,7 +382,7 @@ export async function addFile(dbData) {
     return
 }
 
-
+// TESTED - Laurent
 export async function updateFile(dbData) {
     const params = {
         file_id: dbData.fileId,
@@ -365,35 +390,43 @@ export async function updateFile(dbData) {
     }
     const sqlUpdateFile = "UPDATE file SET file_name = :file_name WHERE file_id = :file_id;"
     await database.query(sqlUpdateFile, params)
-    const file_info = await getFileByID(dbData.filedId)
+    const file_info = await getFileByID(dbData.fileId)
     console.log('db rename file', file_info)
     return file_info
 }
 
+// TESTED - Laurent
 export async function deleteFile(fileId) {
     const params = {
         file_id: fileId
     }
     const sqlDeleteFile = "DELETE FROM file WHERE file_id = :file_id;"
+    const setting = await getSettingByFileID(fileId)
+    if (!setting) {
+        return
+    }
     await deleteImagesByFileId(fileId)
-    await deleteSettingByFileId(fileId)
     await database.query(sqlDeleteFile, params)
+    await deleteSetting(setting.setting_id)
     console.log('db file deleted')
     return
 }
 
+// TESTED - Laurent
 export async function deleteFilesByFolderId(folderId) {
     const files = await getFileNamesByFolderID(folderId)
     if (files.length >= 1) {
-        files.forEach(async file => {
+        for (const file of files) {
             await deleteFile(file.file_id)
-        });
+        }
     }
     console.log('db files from folder deleted')
     return
 }
 
 // IMAGES //
+
+// ALL IMAGE QUERIES NEED TO GET TESTED
 
 export async function getImageByID(imageId) {
     const params = {
