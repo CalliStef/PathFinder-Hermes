@@ -18,13 +18,13 @@ const database = mysql
 
 // USERS //
 
-export async function getUserByLogin (dbData) {
-    const identifier = dbData.userEmail
+export async function getUserByLogin(dbData) {
+    const userEmail = dbData.userEmail
     const password = dbData.userPassword
     const params = {
-        identifier: identifier,
+        user_email: userEmail,
     }
-    const sqlSelectUserByEmail = "SELECT user.user_id, user.user_email, user.user_name, user.password_hash, setting.setting_id, setting.background_colour, setting.typeface, setting.font_size, setting.letter_spacing FROM user JOIN setting ON setting.setting_id = user.setting_id WHERE user_email = :identifier;"
+    const sqlSelectUserByEmail = "SELECT user.user_id, user.user_email, user.user_name, user.password_hash, setting.setting_id, setting.background_colour, setting.typeface, setting.font_size, setting.line_space, setting.letter_space FROM user LEFT JOIN setting ON setting.setting_id = user.setting_id WHERE user.user_email = :user_email;"
     const user_info = await database.query(sqlSelectUserByEmail, params)
     if (user_info[0][0]) {
         const match = await bcrypt.compare(password, user_info[0][0].password_hash)
@@ -35,18 +35,18 @@ export async function getUserByLogin (dbData) {
     }
 }
 
-export async function getUserByID (userId) {
+export async function getUserByID(userId) {
     const params = {
-        user_id: +userId,
+        user_id: userId,
     }
-
-    const sqlSelectUserByID = "SELECT user.user_id, user.user_email, user.user_name, user.password_hash, setting.setting_id, setting.background_colour, setting.typeface, setting.font_size, setting.letter_spacing FROM user JOIN setting ON setting.setting_id = user.setting_id WHERE user_id = :user_id;"
+    console.log(userId)
+    const sqlSelectUserByID = "SELECT user.user_id, user.user_email, user.user_name, user.password_hash, setting.setting_id, setting.background_colour, setting.typeface, setting.font_size, setting.line_space, setting.letter_space FROM user LEFT JOIN setting ON setting.setting_id = user.setting_id WHERE user.user_id = :user_id;"
     const user_info = await database.query(sqlSelectUserByID, params)
     console.log('db get user by id', user_info[0][0])
     return user_info[0][0]
 }
 
-export async function addUser (dbData) {
+export async function addUser(dbData) {
     const checkUserResult = await checkEmail(dbData.userEmail)
     if (checkUserResult.user_matches === 0) {
         const password = dbData.password
@@ -68,7 +68,7 @@ export async function addUser (dbData) {
     return
 }
 
-export async function checkEmail (userEmail) {
+export async function checkEmail(userEmail) {
     const params = {
         user_email: userEmail,
     }
@@ -78,9 +78,9 @@ export async function checkEmail (userEmail) {
     return user_matches[0][0]
 }
 
-export async function updateUserEmail (dbData) {
+export async function updateUserEmail(dbData) {
     const params = {
-        user_id: +dbData.userId,
+        user_id: dbData.userId,
         user_email: dbData.userEmail
     }
 
@@ -94,9 +94,9 @@ export async function updateUserEmail (dbData) {
     return
 }
 
-export async function updateUserName (dbData) {
+export async function updateUserName(dbData) {
     const params = {
-        user_id: +dbData.userId,
+        user_id: dbData.userId,
         user_name: dbData.userName
     }
     const sqlUpdateUserName = "UPDATE user SET user_name = :user_name WHERE user_id = :user_id;"
@@ -105,13 +105,12 @@ export async function updateUserName (dbData) {
     return user_info
 }
 
-// user deletion would need to cascade all images, files, folders, and settings... :thinking:
-// NONE OF THE DELETES WORK RN --> WILL REACH OUT TO PATRICK FOR GUIDANCE ON CASCADE DELETION //
-export async function deleteUser (userId) {
+export async function deleteUser(userId) {
     const params = {
-        user_id: +userId
+        user_id: userId
     }
     const sqlDeleteUser = "DELETE FROM user WHERE user_id = :user_id;"
+    await deleteFoldersByUserId(userId)
     await database.query(sqlDeleteUser, params)
     console.log('db user deleted')
     return
@@ -119,40 +118,40 @@ export async function deleteUser (userId) {
 
 // SETTINGS //
 
-export async function getSettingByID (settingId) {
+export async function getSettingByID(settingId) {
     const params = {
-        setting_id: +settingId,
+        setting_id: settingId,
     }
 
-    const sqlSelectSettingByID = "SELECT setting.setting_id, setting.background_colour, setting.typeface, setting.font_size, setting.line_space, setting.letter_space FROM setting WHERE setting_id = :setting_id;"
+    const sqlSelectSettingByID = "SELECT setting.setting_id, setting.background_colour, setting.typeface, setting.font_size, setting.line_space, setting.letter_space FROM setting WHERE setting.setting_id = :setting_id;"
     const setting_info = await database.query(sqlSelectSettingByID, params)
     console.log('db get setting by id', setting_info[0][0])
     return setting_info[0][0]
 }
 
-export async function getSettingByFileID (fileId) {
+export async function getSettingByFileID(fileId) {
     const params = {
-        file_id: +fileId,
+        file_id: fileId,
     }
 
-    const sqlSelectSettingByFileID = "SELECT setting.setting_id, setting.background_colour, setting.typeface, setting.font_size, setting.line_space, setting.letter_space FROM file JOIN setting ON setting.setting_id = file.setting_id WHERE file_id = :file_id;"
+    const sqlSelectSettingByFileID = "SELECT setting.setting_id, setting.background_colour, setting.typeface, setting.font_size, setting.line_space, setting.letter_space FROM file JOIN setting ON setting.setting_id = file.setting_id WHERE file.file_id = :file_id;"
     const setting_info = await database.query(sqlSelectSettingByFileID, params)
     console.log('db get setting by file id', setting_info[0][0])
     return setting_info[0][0]
 }
 
-export async function getSettingByUserID (userId) {
+export async function getSettingByUserID(userId) {
     const params = {
-        user_id: +userId,
+        user_id: userId,
     }
 
-    const sqlSelectSettingByUserID = "SELECT setting.setting_id, setting.background_colour, setting.typeface, setting.font_size, setting.line_space, setting.letter_space FROM user JOIN setting ON setting.setting_id = user.setting_id WHERE user_id = :user_id;"
+    const sqlSelectSettingByUserID = "SELECT setting.setting_id, setting.background_colour, setting.typeface, setting.font_size, setting.line_space, setting.letter_space FROM user JOIN setting ON setting.setting_id = user.setting_id WHERE user.user_id = :user_id;"
     const setting_info = await database.query(sqlSelectSettingByUserID, params)
     console.log('db get setting by user id', setting_info[0][0])
     return setting_info[0][0]
 }
 
-export async function addSetting (dbData) {
+export async function addSetting(dbData) {
     const params = {
         background_colour: dbData.backgroundColour,
         typeface: dbData.typeface,
@@ -169,26 +168,25 @@ export async function addSetting (dbData) {
     }
 }
 
-export async function updateSetting (dbData) {
+export async function updateSetting(dbData) {
     const params = {
-        setting_id: +dbData.settingId,
+        setting_id: dbData.settingId,
         background_colour: dbData.backgroundColour,
         typeface: dbData.typeface,
         font_size: dbData.fontSize,
         line_space: dbData.lineSpace,
         letter_space: dbData.letterSpace
     }
-    const sqlUpdateSetting = "UPDATE setting SET background_colour = :background_colour, typeface = :typeface, font_size = :font_size, line_space = :line_space, letter_space = :letter_space WHERE setting_id = :setting_id;"
+    const sqlUpdateSetting = "UPDATE setting SET background_colour = :background_colour, typeface = :typeface, font_size = :font_size, line_space = :line_space, letter_space = :letter_space WHERE setting.setting_id = :setting_id;"
     await database.query(sqlUpdateSetting, params)
     const setting_info = await getSettingByID(dbData.settingId)
     console.log('db update setting', setting_info)
     return setting_info
 }
 
-// NONE OF THE DELETES WORK RN --> WILL REACH OUT TO PATRICK FOR GUIDANCE ON CASCADE DELETION //
-export async function deleteSetting (settingId) {
+export async function deleteSetting(settingId) {
     const params = {
-        setting_id: +settingId
+        setting_id: settingId
     }
     const sqlDeleteSetting = "DELETE FROM setting WHERE setting_id = :setting_id;"
     await database.query(sqlDeleteSetting, params)
@@ -196,46 +194,53 @@ export async function deleteSetting (settingId) {
     return
 }
 
+export async function deleteSettingByFileId(fileId) {
+    const setting = await getSettingByFileID(fileId)
+    await deleteSetting(setting.setting_id)
+    console.log('db setting by file id deleted')
+    return
+}
+
 // FOLDERS //
 
-export async function getFolderByID (folderId) {
+export async function getFolderByID(folderId) {
     const params = {
-        folder_id: +folderId,
+        folder_id: folderId,
     }
 
-    const sqlSelectFolderByID = "SELECT folder.folder_id, folder.user_id, folder.folder_name FROM folder WHERE folder_id = :folder_id;"
+    const sqlSelectFolderByID = "SELECT folder.folder_id, folder.user_id, folder.folder_name FROM folder WHERE folder.folder_id = :folder_id;"
     const folder_info = await database.query(sqlSelectFolderByID, params)
     console.log('db get folder by id', folder_info[0][0])
     return folder_info[0][0]
 }
 
-export async function getFolderByFileID (fileId) {
+export async function getFolderByFileID(fileId) {
     const params = {
-        file_id: +fileId,
+        file_id: fileId,
     }
 
-    const sqlSelectFolderByFileID = "SELECT folder.folder_id, folder.user_id, folder.folder_name FROM file JOIN folder ON folder.folder_id = file.folder_id WHERE file_id = :file_id;"
+    const sqlSelectFolderByFileID = "SELECT folder.folder_id, folder.user_id, folder.folder_name FROM file JOIN folder ON folder.folder_id = file.folder_id WHERE file.file_id = :file_id;"
     const folder_info = await database.query(sqlSelectFolderByFileID, params)
     console.log('db get folder by file id', folder_info[0][0])
     return folder_info[0][0]
 }
 
-export async function getFoldersByUserID (userId) {
+export async function getFoldersByUserID(userId) {
     const params = {
-        user_id: +userId,
+        user_id: userId,
     }
 
-    const sqlSelectFolderByUserID = "SELECT folder.folder_id, folder.user_id, folder.folder_name FROM user JOIN folder ON folder.user_id = user.user_id WHERE user_id = :user_id;"
+    const sqlSelectFolderByUserID = "SELECT folder.folder_id, folder.user_id, folder.folder_name FROM user JOIN folder ON folder.user_id = user.user_id WHERE user.user_id = :user_id;"
     const all_folder_info = await database.query(sqlSelectFolderByUserID, params)
     console.log('db get folder by user id', all_folder_info[0])
     return all_folder_info[0]
 }
 
-export async function addFolder (dbData) {
+export async function addFolder(dbData) {
     const checkFolderResult = await checkFolder(dbData.userId, dbData.folderName)
     if (checkFolderResult.folder_matches === 0) {
         const params = {
-            user_id: +dbData.userId,
+            user_id: dbData.userId,
             folder_name: dbData.folderName
         }
         const sqlInsertFolder = "INSERT INTO folder (folder_name, user_id) VALUES (:folder_name, :user_id);"
@@ -250,21 +255,21 @@ export async function addFolder (dbData) {
     return
 }
 
-export async function checkFolder (userId, folderName) {
+export async function checkFolder(userId, folderName) {
     const params = {
-        user_id: +userId,
+        user_id: userId,
         folder_name: folderName
     }
-    const sqlSelectFolderByName = "SELECT COUNT(*) AS folder_matches FROM folder JOIN user ON user.user_id = folder.user_id WHERE folder_name = :folder_name;"
+    const sqlSelectFolderByName = "SELECT COUNT(*) AS folder_matches FROM folder JOIN user ON user.user_id = folder.user_id WHERE folder.folder_name = :folder_name;"
     const folder_matches = await database.query(sqlSelectFolderByName, params)
     console.log('db check folder names', folder_matches[0][0])
     return folder_matches[0][0]
 }
 
 
-export async function updateFolder (dbData) {
+export async function updateFolder(dbData) {
     const params = {
-        folder_id: +dbData.folderId,
+        folder_id: dbData.folderId,
         folder_name: dbData.folderName
     }
     const sqlUpdateFolder = "UPDATE folder SET folder_name = :folder_name WHERE folder_id = :folder_id;"
@@ -274,57 +279,70 @@ export async function updateFolder (dbData) {
     return folder_info
 }
 
-// NONE OF THE DELETES WORK RN --> WILL REACH OUT TO PATRICK FOR GUIDANCE ON CASCADE DELETION //
-export async function deleteFolder (folderId) {
+export async function deleteFolder(folderId) {
     const params = {
-        folder_id: +folderId
+        folder_id: folderId
     }
     const sqlDeleteFolder = "DELETE FROM folder WHERE folder_id = :folder_id;"
+    await deleteFilesByFolderId(folderId)
     await database.query(sqlDeleteFolder, params)
     console.log('db folder deleted')
     return
 }
 
-// FILES //
-
-export async function getFileByID (fileId) {
-    const params = {
-        file_id: +fileId,
+export async function deleteFoldersByUserId (userId) {
+    const folders = await getFoldersByUserID(userId)
+    if (folders.length >= 1) {
+        folders.forEach(async folder => {
+            await deleteFolder(folder.folder_id)
+        });
     }
-
-    const sqlSelectFileByID = "SELECT file.file_id, file.user_id, file.setting_id, file.folder_id, file.file_link, file.file_content, file.file_name, file.creation_date, image.image_id, image.image_link, image.image_alt_text FROM file JOIN image ON image.file_id = file.file_id WHERE file_id = :file_id;"
-    const file_info = await database.query(sqlSelectFileByID, params)
-    console.log('db get file by id', file_info[0][0])
-    return file_info[0][0]
+    console.log('db folders from user deleted')
+    return
 }
 
-export async function getFileNamesByFolderID (folderId) {
+// FILES //
+
+export async function getFileByID(fileId) {
     const params = {
-        folder_id: +folderId,
+        file_id: fileId,
+    }
+    const sqlSelectFileByID = "SELECT file.file_id, file.user_id, file.setting_id, file.folder_id, file.file_link, file.file_content, file.file_name, file.file_creation_date FROM file WHERE file.file_id = :file_id;"
+    const file_info = await database.query(sqlSelectFileByID, params)
+    console.log('db get file by id', file_info[0][0])
+    const images = await getImagesByFileID(fileId)
+    file_info[0][0].images = images
+    return file_info[0][0]
+
+}
+
+export async function getFileNamesByFolderID(folderId) {
+    const params = {
+        folder_id: folderId,
     }
 
-    const sqlSelectFileNamesByFolderID = "SELECT file.file_id, file.file_name FROM folder JOIN file ON file.folder_id = folder.folder_id WHERE folder_id = :folder_id;"
+    const sqlSelectFileNamesByFolderID = "SELECT file.file_id, file.file_name FROM folder JOIN file ON file.folder_id = folder.folder_id WHERE folder.folder_id = :folder_id;"
     const all_file_info = await database.query(sqlSelectFileNamesByFolderID, params)
     console.log('db get file names by folder id', all_file_info[0])
     return all_file_info[0]
 }
 
-export async function getFileNamesByUserID (userId) {
+export async function getFileNamesByUserID(userId) {
     const params = {
-        user_id: +userId,
+        user_id: userId,
     }
 
-    const sqlSelectFileNamesByUserID = "SELECT file.file_id, file.file_name FROM user JOIN file ON file.user_id = folder.user_id WHERE user_id = :user_id;"
+    const sqlSelectFileNamesByUserID = "SELECT file.file_id, file.file_name FROM user JOIN file ON file.user_id = folder.user_id WHERE user.user_id = :user_id;"
     const all_file_info = await database.query(sqlSelectFileNamesByUserID, params)
     console.log('db get file names by user id', all_file_info[0])
     return all_file_info[0]
 }
 
-export async function addFile (dbData) {
+export async function addFile(dbData) {
     const params = {
-        user_id: +dbData.userId,
-        setting_id: +dbData.settingId,
-        folder_id: +dbData.fileId,
+        user_id: dbData.userId,
+        setting_id: dbData.settingId,
+        folder_id: dbData.folderId,
         file_name: dbData.fileName,
         file_link: dbData.fileLink,
         file_content: dbData.fileContent,
@@ -340,9 +358,9 @@ export async function addFile (dbData) {
 }
 
 
-export async function updateFile (dbData) {
+export async function updateFile(dbData) {
     const params = {
-        file_id: +dbData.fileId,
+        file_id: dbData.fileId,
         file_name: dbData.fileName
     }
     const sqlUpdateFile = "UPDATE file SET file_name = :file_name WHERE file_id = :file_id;"
@@ -352,72 +370,88 @@ export async function updateFile (dbData) {
     return file_info
 }
 
-// NONE OF THE DELETES WORK RN --> WILL REACH OUT TO PATRICK FOR GUIDANCE ON CASCADE DELETION //
-export async function deleteFile (fileId) {
+export async function deleteFile(fileId) {
     const params = {
-        file_id: +fileId
+        file_id: fileId
     }
     const sqlDeleteFile = "DELETE FROM file WHERE file_id = :file_id;"
+    await deleteImagesByFileId(fileId)
+    await deleteSettingByFileId(fileId)
     await database.query(sqlDeleteFile, params)
     console.log('db file deleted')
     return
 }
 
+export async function deleteFilesByFolderId(folderId) {
+    const files = await getFileNamesByFolderID(folderId)
+    if (files.length >= 1) {
+        files.forEach(async file => {
+            await deleteFile(file.file_id)
+        });
+    }
+    console.log('db files from folder deleted')
+    return
+}
+
 // IMAGES //
 
-export async function getImageByID (imageId) {
+export async function getImageByID(imageId) {
     const params = {
-        image_id: +imageId,
+        image_id: imageId,
     }
 
-    const sqlSelectImageByID = "SELECT image.image_id, image.file_id, image.image_link, image.image_alt_text FROM image WHERE image_id = :image_id;"
+    const sqlSelectImageByID = "SELECT image.image_id, image.file_id, image.image_link, image.image_alt_text FROM image WHERE image.image_id = :image_id;"
     const image_info = await database.query(sqlSelectImageByID, params)
     console.log('db get image by id', image_info[0][0])
     return image_info[0][0]
 }
 
-export async function getImagesByFileID (fileId) {
+export async function getImagesByFileID(fileId) {
     const params = {
-        file_id: +fileId,
+        file_id: fileId,
     }
 
-    const sqlSelectImagesByFileID = "SELECT image.image_id, image.file_id, image.image_link, image.image_alt_text FROM file JOIN image ON image.file_id = file.file_id WHERE file_id = :file_id;"
+    const sqlSelectImagesByFileID = "SELECT image.image_id, image.file_id, image.image_link, image.image_alt_text FROM image WHERE image.file_id = :file_id;"
     const all_file_images = await database.query(sqlSelectImagesByFileID, params)
     console.log('db get images by file id', all_file_images[0])
     return all_file_images[0]
 }
 
-export async function getImagesByUserID (userId) {
+export async function getImagesByUserID(userId) {
     const params = {
-        user_id: +userId,
+        user_id: userId,
     }
 
-    const sqlSelectFileNamesByUserID = "SELECT image.image_id, image.file_id, image.image_link, image.image_alt_text FROM user JOIN image ON image.user_id = user.user_id WHERE user_id = :user_id;"
+    const sqlSelectFileNamesByUserID = "SELECT image.image_id, image.file_id, image.image_link, image.image_alt_text FROM image WHERE image.user_id = :user_id;"
     const all_file_info = await database.query(sqlSelectFileNamesByUserID, params)
     console.log('db get file names by user id', all_file_info[0])
     return all_file_info[0]
 }
 
-export async function addImage (dbData) {
+export async function addImage(dbData) {
     const params = {
-        file_id: +dbData.userId,
+        file_id: dbData.fileId,
         image_link: dbData.imageLink,
         image_alt_text: dbData.imageAltText,
     }
     const sqlInsertImage = "INSERT INTO image (file_id, image_link, image_alt_text) VALUES (:file_id, :image_link, :image_alt_text);"
-    const result = await database.query(sqlInsertImage, params)
-    if (result[0]) {
-        const image_info = await getImageByID(result[0].insertId)
-        console.log('db add image', image_info)
-        return image_info
+    const file = await getFileByID(dbData.fileId)
+    if (file) {
+        const result = await database.query(sqlInsertImage, params)
+        if (result[0]) {
+            const image_info = await getImageByID(result[0].insertId)
+            console.log('db add image', image_info)
+            return image_info
+        }
+        return
     }
     return
 }
 
 
-export async function updateImage (dbData) {
+export async function updateImage(dbData) {
     const params = {
-        image_id: +dbData.imageId,
+        image_id: dbData.imageId,
         image_link: dbData.imageLink,
         image_alt_text: dbData.imageAltText,
     }
@@ -428,14 +462,23 @@ export async function updateImage (dbData) {
     return image_info
 }
 
-// NONE OF THE DELETES WORK RN --> WILL REACH OUT TO PATRICK FOR GUIDANCE ON CASCADE DELETION //
-// well except this one works because its the runt //
-export async function deleteImage (imageId) {
+
+export async function deleteImage(imageId) {
     const params = {
-        image_id: +imageId
+        image_id: imageId
     }
     const sqlDeleteImage = "DELETE FROM image WHERE image_id = :image_id;"
     await database.query(sqlDeleteImage, params)
     console.log('db image deleted')
+    return
+}
+
+export async function deleteImagesByFileId(fileId) {
+    const params = {
+        file_id: fileId
+    }
+    const sqlDeleteImage = "DELETE FROM image WHERE file_id = :file_id;"
+    await database.query(sqlDeleteImage, params)
+    console.log('db images from file deleted')
     return
 }

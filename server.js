@@ -457,18 +457,35 @@ app.put("/api/db/folder", async (req, res) => {
     return
 })
 
-app.delete("/api/db/setting/:id", async (req, res) => {
+app.delete("/api/db/folder/:id", async (req, res) => {
+    // AUTH REQUIRED
+    if (!req.params) {
+        res.status(404).send({ error: "folderId info is missing" })
+        return
+    }
+    const id = +req.params.id
+    if (Number.isNaN(id) || id == null) {
+        res.status(400).send({ error: "folderId type is incorrect" })
+        return
+    }
+    await database.deleteFolder(id)
+    res.status(200).end()
+    return
+
+})
+
+app.delete("/api/db/folders/userid/:userid", async (req, res) => {
     // AUTH REQUIRED
     if (!req.params) {
         res.status(404).send({ error: "id info is missing" })
         return
     }
-    const id = +req.params.id
-    if (Number.isNaN(id) || id == null) {
+    const userId = +req.params.userid
+    if (Number.isNaN(userId) || userId == null) {
         res.status(400).send({ error: "id type is incorrect" })
         return
     }
-    await database.deleteFolder(id)
+    await database.deleteFoldersByUserId(userId)
     res.status(200).end()
     return
 
@@ -593,6 +610,23 @@ app.delete("/api/db/file/:id", async (req, res) => {
         return
     }
     await database.deleteFile(id)
+    res.status(200).end()
+    return
+
+})
+
+app.delete("/api/db/files/folderid/:folderid", async (req, res) => {
+    // AUTH REQUIRED
+    if (!req.params) {
+        res.status(404).send({ error: "id info is missing" })
+        return
+    }
+    const folderId = +req.params.folderid
+    if (Number.isNaN(folderId) || folderId == null) {
+        res.status(400).send({ error: "id type is incorrect" })
+        return
+    }
+    await database.deleteFilesByFolderId(folderId)
     res.status(200).end()
     return
 
@@ -724,6 +758,22 @@ app.delete("/api/db/image/:id", async (req, res) => {
     res.status(200).end()
     return
 
+})
+
+app.delete("/api/db/images/fileid/:fileid", async (req, res) => {
+    // AUTH REQUIRED
+    if (!req.params) {
+        res.status(404).send({ error: "id info is missing" })
+        return
+    }
+    const fileId = +req.params.fileid
+    if (Number.isNaN(fileId) || fileId == null) {
+        res.status(400).send({ error: "fileId type is incorrect" })
+        return
+    }
+    await database.deleteImagesByFileId(fileId)
+    res.status(200).end()
+    return
 })
 
 
