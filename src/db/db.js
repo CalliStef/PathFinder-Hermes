@@ -344,7 +344,7 @@ export async function getFileNamesByFolderID(folderId) {
         folder_id: folderId,
     }
 
-    const sqlSelectFileNamesByFolderID = "SELECT file.file_id, file.file_name FROM folder JOIN file ON file.folder_id = folder.folder_id WHERE folder.folder_id = :folder_id;"
+    const sqlSelectFileNamesByFolderID = "SELECT file.file_id, file.file_name, file.file_content FROM folder JOIN file ON file.folder_id = folder.folder_id WHERE folder.folder_id = :folder_id;"
     const all_file_info = await database.query(sqlSelectFileNamesByFolderID, params)
     console.log('db get file names by folder id', all_file_info[0])
     return all_file_info[0]
@@ -356,7 +356,7 @@ export async function getFileNamesByUserID(userId) {
         user_id: userId,
     }
 
-    const sqlSelectFileNamesByUserID = "SELECT file.file_id, file.file_name FROM user JOIN file ON file.user_id = user.user_id WHERE user.user_id = :user_id;"
+    const sqlSelectFileNamesByUserID = "SELECT file.file_id, file.file_name, file.file_content FROM user JOIN file ON file.user_id = user.user_id WHERE user.user_id = :user_id;"
     const all_file_info = await database.query(sqlSelectFileNamesByUserID, params)
     console.log('db get file names by user id', all_file_info[0])
     return all_file_info[0]
@@ -386,9 +386,10 @@ export async function addFile(dbData) {
 export async function updateFile(dbData) {
     const params = {
         file_id: dbData.fileId,
-        file_name: dbData.fileName
+        file_name: dbData.fileName,
+        folder_id: dbData.folderId
     }
-    const sqlUpdateFile = "UPDATE file SET file_name = :file_name WHERE file_id = :file_id;"
+    const sqlUpdateFile = "UPDATE file SET file_name = :file_name, folder_id = :folder_id WHERE file_id = :file_id;"
     await database.query(sqlUpdateFile, params)
     const file_info = await getFileByID(dbData.fileId)
     console.log('db rename file', file_info)
