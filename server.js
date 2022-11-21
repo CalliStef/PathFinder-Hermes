@@ -618,6 +618,14 @@ app.put("/api/db/file", async (req, res) => {
         res.status(400).send({ error: "fileName is missing" })
         return
     }
+    if (!fileData.folderId) {
+        res.status(400).send({ error: "folderId is missing" })
+        return
+    }
+    if (!fileData.fileContent) {
+        res.status(400).send({ error: "folderId is missing" })
+        return
+    }
     const file = await database.updateFile(fileData)
     res.status(200).send(file)
     return
