@@ -387,9 +387,10 @@ export async function updateFile(dbData) {
     const params = {
         file_id: dbData.fileId,
         file_name: dbData.fileName,
+        file_content: dbData.fileContent,
         folder_id: dbData.folderId
     }
-    const sqlUpdateFile = "UPDATE file SET file_name = :file_name, folder_id = :folder_id WHERE file_id = :file_id;"
+    const sqlUpdateFile = "UPDATE file SET file_name = :file_name, file_content = :file_content, folder_id = :folder_id WHERE file_id = :file_id;"
     await database.query(sqlUpdateFile, params)
     const file_info = await getFileByID(dbData.fileId)
     console.log('db rename file', file_info)
