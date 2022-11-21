@@ -344,7 +344,7 @@ export async function getFileNamesByFolderID(folderId) {
         folder_id: folderId,
     }
 
-    const sqlSelectFileNamesByFolderID = "SELECT file.file_id, file.file_name, file.file_content FROM folder JOIN file ON file.folder_id = folder.folder_id WHERE folder.folder_id = :folder_id;"
+    const sqlSelectFileNamesByFolderID = "SELECT file.file_id, file.file_name, file.file_content, file.folder_id FROM folder JOIN file ON file.folder_id = folder.folder_id WHERE folder.folder_id = :folder_id;"
     const all_file_info = await database.query(sqlSelectFileNamesByFolderID, params)
     console.log('db get file names by folder id', all_file_info[0])
     return all_file_info[0]
