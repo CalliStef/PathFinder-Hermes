@@ -525,7 +525,7 @@ export async function getKeywordByID(keywordId) {
         keyword_id: keywordId,
     }
 
-    const sqlSelectKeyWordByID = "SELECT keyword.keyword_id, keyword.keyword_name FROM keyword WHERE keyword.keyword_id = :keyword_id;"
+    const sqlSelectKeyWordByID = "SELECT keyword.keyword_id, keyword.keyword_name, keyword.keyword_definition FROM keyword WHERE keyword.keyword_id = :keyword_id;"
     const keyword_info = await database.query(sqlSelectKeyWordByID, params)
     console.log('db get keyword by id', keyword_info[0][0])
     return keyword_info[0][0]
@@ -536,29 +536,19 @@ export async function getKeywordsByFileID(fileId) {
         file_id: fileId,
     }
 
-    const sqlSelectKeyWordsByFileID = "SELECT keyword.keyword_id, keyword.keyword_name FROM keyword WHERE keyword.file_id = :file_id;"
+    const sqlSelectKeyWordsByFileID = "SELECT keyword.keyword_id, keyword.keyword_name, keyword.keyword_definition FROM keyword WHERE keyword.file_id = :file_id;"
     const all_file_keywords = await database.query(sqlSelectKeyWordsByFileID, params)
     console.log('db get keywords by file id', all_file_keywords[0])
     return all_file_keywords[0]
-}
-
-export async function getKeywordsByUserID(userId) {
-    const params = {
-        user_id: userId,
-    }
-
-    const sqlSelectKeyWordsByUserID = "SELECT keyword.keyword_id, keyword.keyword_name FROM keyword WHERE keyword.user_id = :user_id;"
-    const all_file_info = await database.query(sqlSelectKeyWordsByUserID, params)
-    console.log('db get keywords by user id', all_file_info[0])
-    return all_file_info[0]
 }
 
 export async function addKeyword(dbData) {
     const params = {
         file_id: dbData.fileId,
         keyword_name: dbData.keywordName,
+        keyword_definition: dbData.keywordDefinition,
     }
-    const sqlInsertKeyWord = "INSERT INTO keyword (file_id, keyword_name) VALUES (:file_id, :keyword_name);"
+    const sqlInsertKeyWord = "INSERT INTO keyword (file_id, keyword_name, keyword_definition) VALUES (:file_id, :keyword_name);"
     const file = await getFileByID(dbData.fileId)
     if (file) {
         const result = await database.query(sqlInsertKeyWord, params)
@@ -576,8 +566,9 @@ export async function updateKeyword(dbData) {
     const params = {
         keyword_id: dbData.keywordId,
         keyword_name: dbData.keywordName,
+        keyword_definition: dbData.keywordDefinition,
     }
-    const sqlUpdateKeyWord = "UPDATE keyword SET keyword_name = :keyword_name WHERE keyword_id = :keyword_id;"
+    const sqlUpdateKeyWord = "UPDATE keyword SET keyword_name = :keyword_name, keyword_definition = :keyword_definition WHERE keyword_id = :keyword_id;"
     await database.query(sqlUpdateKeyWord, params)
     const keyword_info = await getKeywordByID(dbData.keywordId)
     console.log('db update keyword', keyword_info)

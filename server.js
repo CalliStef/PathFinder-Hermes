@@ -849,26 +849,6 @@ app.get("/api/db/keywords/fileid/:fileid", async (req, res) => {
     return
 });
 
-app.get("/api/db/keywords/userid/:userid", async (req, res) => {
-    // AUTH REQUIRED
-    if (!req.params) {
-        res.status(400).send({ error: "userId info is missing" })
-        return
-    }
-    const userId = +req.params.userid
-    if (Number.isNaN(userId) || userId == null) {
-        res.status(400).send({ error: "userId type is incorrect" })
-        return
-    }
-    const keywords = await database.getKeywordsByUserID(userId)
-    if (!keywords) {
-        res.status(404).send({ error: "There are no keywords with this userid" })
-        return
-    }
-    res.status(200).send(keywords)
-    return
-});
-
 app.post("/api/db/keyword", async (req, res) => {
     // AUTH REQUIRED
     if (!req.body) {
@@ -896,7 +876,11 @@ app.put("/api/db/keyword", async (req, res) => {
         res.status(400).send({ error: "keywordId is missing" })
         return
     }
-    if (!keywordData.keyword) {
+    if (!keywordData.keywordName) {
+        res.status(400).send({ error: "keyword is missing" })
+        return
+    }
+    if (!keywordData.keywordDefinition) {
         res.status(400).send({ error: "keyword is missing" })
         return
     }
