@@ -548,7 +548,7 @@ export async function addKeyword(dbData) {
         keyword_name: dbData.keywordName,
         keyword_definition: dbData.keywordDefinition,
     }
-    const sqlInsertKeyWord = "INSERT INTO keyword (file_id, keyword_name, keyword_definition) VALUES (:file_id, :keyword_name);"
+    const sqlInsertKeyWord = "INSERT INTO keyword (file_id, keyword_name, keyword_definition) VALUES (:file_id, :keyword_name, :keyword_definition);"
     const file = await getFileByID(dbData.fileId)
     if (file) {
         const result = await database.query(sqlInsertKeyWord, params)
