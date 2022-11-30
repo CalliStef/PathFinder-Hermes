@@ -494,7 +494,7 @@ export async function updateImage(dbData) {
     }
     const sqlUpdateImage = "UPDATE image SET image_link = :image_link, image_alt_text = :image_alt_text WHERE image_id = :image_id;"
     await database.query(sqlUpdateImage, params)
-    const image_info = await getImageByID(dbData.filedId)
+    const image_info = await getImageByID(dbData.fileId)
     console.log('db update image', image_info)
     return image_info
 }
@@ -603,7 +603,7 @@ export async function getSummaryByID(summaryId) {
     const params = {
         summary_id: summaryId,
     }
-    const sqlSelectSummaryByID = "SELECT summary.summary_id, summary.filed_id, summary.summary_content, summary.summary_result FROM summary WHERE summary.summary_id = :summary_id;"
+    const sqlSelectSummaryByID = "SELECT summary.summary_id, summary.file_id, summary.summary_content, summary.summary_result FROM summary WHERE summary.summary_id = :summary_id;"
     const summary_info = await database.query(sqlSelectSummaryByID, params)
     console.log('db get summary by id', summary_info[0][0])
     return summary_info[0][0]
@@ -613,13 +613,14 @@ export async function getSummariesByFileID(fileId) {
     const params = {
         file_id: fileId,
     }
-    const sqlSelectSummariesByFileID = "SELECT summary.summary_id, summary.filed_id, summary.summary_content, summary.summary_result FROM summary WHERE summary.file_id = :file_id;"
+    const sqlSelectSummariesByFileID = "SELECT summary.summary_id, summary.file_id, summary.summary_content, summary.summary_result FROM summary WHERE summary.file_id = :file_id;"
     const all_file_summaries = await database.query(sqlSelectSummariesByFileID, params)
     console.log('db get summaries by file id', all_file_summaries[0])
     return all_file_summaries[0]
 }
 
 export async function addSummary(dbData) {
+    console.log("ADD SUMMARY", dbData)
     const params = {
         file_id: dbData.fileId,
         summary_content: dbData.summaryContent,
