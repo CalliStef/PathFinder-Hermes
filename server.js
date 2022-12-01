@@ -1012,11 +1012,7 @@ app.get("/api/db/highlight/:id", async (req, res) => {
         res.status(400).send({ error: "id info is missing" })
         return
     }
-    const id = +req.params.id
-    if (Number.isNaN(id) || id == null) {
-        res.status(400).send({ error: "id type is incorrect" })
-        return
-    }
+    const id = req.params.id
     const highlight = await database.getHighlightByID(id)
     if (!highlight) {
         res.status(404).send({ error: "There is no highlight with this id" })
@@ -1053,12 +1049,12 @@ app.post("/api/db/highlight", async (req, res) => {
         return
     }
     const highlightData = req.body.highlightData
-    if (!highlightData.fileId) {
-        res.status(400).send({ error: "fileId is missing" })
+    if (!highlightData.highlightId) {
+        res.status(400).send({ error: "highlightId is missing" })
         return
     }
-    if (!highlightData.highlightUuid) {
-        res.status(400).send({ error: "highlightUuid is missing" })
+    if (!highlightData.fileId) {
+        res.status(400).send({ error: "fileId is missing" })
         return
     }
     const highlight = await database.updateHighlight(highlightData)
@@ -1081,10 +1077,6 @@ app.put("/api/db/highlight", async (req, res) => {
         res.status(400).send({ error: "fileId is missing" })
         return
     }
-    if (!highlightData.highlightUuid) {
-        res.status(400).send({ error: "highlightUuid is missing" })
-        return
-    }
     const highlight = await database.updateHighlight(highlightData)
     res.status(200).send(highlight)
     return
@@ -1096,11 +1088,7 @@ app.delete("/api/db/highlight/:id", async (req, res) => {
         res.status(404).send({ error: "id info is missing" })
         return
     }
-    const id = +req.params.id
-    if (Number.isNaN(id) || id == null) {
-        res.status(400).send({ error: "id type is incorrect" })
-        return
-    }
+    const id = req.params.id
     await database.deleteHighlight(id)
     res.status(200).end()
     return

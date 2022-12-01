@@ -678,9 +678,9 @@ export async function deleteSummariesByFileId(fileId) {
 
 export async function getHighlightByID(highlightId) {
     const params = {
-        highlight_id: highlightId,
+        highlight_uuid: highlightId,
     }
-    const sqlSelectHighlightByID = "SELECT highlight.highlight_id, highlight.file_id, highlight.highlight_uuid FROM highlight WHERE highlight.highlight_id = :highlight_id;"
+    const sqlSelectHighlightByID = "SELECT highlight.file_id, highlight.highlight_uuid FROM highlight WHERE highlight.highlight_uuid = :highlight_uuid;"
     const highlight_info = await database.query(sqlSelectHighlightByID, params)
     console.log('db get highlight by id', highlight_info[0][0])
     return highlight_info[0][0]
@@ -690,7 +690,7 @@ export async function getHighlightsByFileID(fileId) {
     const params = {
         file_id: fileId,
     }
-    const sqlSelectHighlightsByFileID = "SELECT highlight.highlight_id, highlight.file_id, highlight.highlight_uuid FROM highlight WHERE highlight.file_id = :file_id;"
+    const sqlSelectHighlightsByFileID = "SELECT highlight.file_id, highlight.highlight_uuid FROM highlight WHERE highlight.file_id = :file_id;"
     const all_file_highlights = await database.query(sqlSelectHighlightsByFileID, params)
     console.log('db get highlights by file id', all_file_highlights[0])
     return all_file_highlights[0]
@@ -699,7 +699,7 @@ export async function getHighlightsByFileID(fileId) {
 export async function addHighlight(dbData) {
     const params = {
         file_id: dbData.fileId,
-        highlight_uuid: dbData.highlightUuid,
+        highlight_uuid: dbData.highlightId,
     }
     const sqlInsertHighlight = "INSERT INTO highlight (file_id, highlight_uuid) VALUES (:file_id, :highlight_uuid);"
     const file = await getFileByID(dbData.fileId)
@@ -717,10 +717,10 @@ export async function addHighlight(dbData) {
 
 export async function updateHighlight(dbData) {
     const params = {
-        highlight_id: dbData.highlightId,
-        highlight_uuid: dbData.highlightUuid,
+        file_id: dbData.fileId,
+        highlight_uuid: dbData.highlightId,
     }
-    const sqlUpdateHighlight = "UPDATE highlight SET highlight_uuid = :highlight_uuid WHERE highlight_id = :highlight_id;"
+    const sqlUpdateHighlight = "UPDATE highlight SET highlight_uuid = :highlight_uuid, file_id = :file_id WHERE highlight_uuid = :highlight_uuid;"
     await database.query(sqlUpdateHighlight, params)
     const highlight_info = await getHighlightByID(dbData.highlightId)
     console.log('db update highlight', highlight_info)
@@ -729,9 +729,9 @@ export async function updateHighlight(dbData) {
 
 export async function deleteHighlight(highlightId) {
     const params = {
-        highlight_id: highlightId
+        highlight_uuid: highlightId
     }
-    const sqlDeleteHighlight = "DELETE FROM highlight WHERE highlight_id = :highlight_id;"
+    const sqlDeleteHighlight = "DELETE FROM highlight WHERE highlight_uuid = :highlight_uuid;"
     await database.query(sqlDeleteHighlight, params)
     console.log('db highlight deleted')
     return
