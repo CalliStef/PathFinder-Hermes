@@ -678,9 +678,9 @@ export async function deleteSummariesByFileId(fileId) {
 
 export async function getHighlightByID(highlightId) {
     const params = {
-        highlight_uuid: highlightId,
+        highlight_id: highlightId,
     }
-    const sqlSelectHighlightByID = "SELECT highlight.file_id, highlight.highlight_uuid FROM highlight WHERE highlight.highlight_uuid = :highlight_uuid;"
+    const sqlSelectHighlightByID = "SELECT highlight.file_id, highlight.highlight_uuid FROM highlight WHERE highlight.highlight_id = :highlight_id;"
     const highlight_info = await database.query(sqlSelectHighlightByID, params)
     console.log('db get highlight by id', highlight_info[0][0])
     return highlight_info[0][0]
